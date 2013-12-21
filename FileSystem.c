@@ -22,7 +22,7 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
-nodeRef Construction()
+nodeRef ConstructionTree()
 {
     nodeRef treeSystem = (nodeRef)malloc(sizeof(node));
     treeSystem->nodeName = ""; 
@@ -44,4 +44,15 @@ void AdditionNode(nodeRef Parent, nodeRef Node)
     addChild[Parent->countOfChild] = Node; 
     Parent->nodeChild = addChild;
     Parent->countOfChild++; 
+}
+
+nodeRef ConstructionNode(char* name, char* data)
+{
+    nodeRef Node = (nodeRef)malloc(sizeof(node));
+    node->nodeName = name;
+    node->nodeData = content;
+    node->nodeParent = 0;
+    node->nodeChild = 0;
+    node->countOfChild = 0;
+    return node;
 }

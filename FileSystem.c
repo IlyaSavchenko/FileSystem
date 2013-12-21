@@ -32,3 +32,16 @@ nodeRef Construction()
     treeSystem->countOfChild = 0;
     return treeSystem;
 }
+
+void AdditionNode(nodeRef Parent, nodeRef Node)
+{   
+    Node->nodeParent = Parent;   
+    nodeRef* addChild = (nodeRef*)malloc(sizeof(nodeRef*)*(parent->countOfChild + 1));
+    for(i = 0; i < Parent->countOfChild; i++)
+    {
+        addChild[i] = Parent->nodeChild[i];
+    }
+    addChild[Parent->countOfChild] = Node; 
+    Parent->nodeChild = addChild;
+    Parent->countOfChild++; 
+}

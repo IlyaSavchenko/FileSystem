@@ -56,3 +56,106 @@ nodeRef ConstructionNode(char* name, char* data)
     node->countOfChild = 0;
     return node;
 }
+
+void deleteNode(nodeRef Node)
+{
+    nodeRef Parent = Node->nodeParent;
+    nodeRef* addNode = (nodeRef*)malloc(sizeof(nodeRef)*(Parent->countOfChild - 1));  
+    int mod = 0;
+    for(int i = 0; i < Parent->countOfChild; i++)
+    {
+        if (strcmp(Parent->nodeChild[i]->nodeName, Node->nodeName) == 0)
+        {
+            mod = -1;
+            continue;
+        }
+        addNode[i + mod] = Parent->nodeChild[i];
+    }
+    Parent->countOfChild--;
+    Parent->nodeChild = addNode;
+    return 0;
+}
+
+char** separationPath(char* route)
+{
+	char** res;
+	if (strlen(path) > 1) {
+		int count = 0;
+		int i = 0;
+		while(path[i] != 0)
+			if (path[i++] == '/') 
+				count++;
+		res = malloc(sizeof(char*)*(count + 2));
+		res[count + 1] = 0;
+		res[0] = "/";
+		char* pointer = strtok(path, "/");
+		i = 1;
+		while(pointer) {
+			res[i++] = pointer;
+			pointer = strtok(NULL, "/");
+		}
+	} else {
+		res = (char**)malloc(sizeof(char*)*2);
+		res[1] = 0;
+		res[0] = "/";
+	} 
+	return res;
+}
+
+nodeRef skNode(char* path)
+{
+	char** res;
+	if (strlen(path) > 1) {
+		int count = 0;
+		int i = 0;
+		while(path[i] != 0)
+			if (path[i++] == '/') 
+				count++;
+		res = malloc(sizeof(char*)*(count + 2));
+		res[count + 1] = 0;
+		res[0] = "/";
+		char* pointer = strtok(path, "/");
+		i = 1;
+		while(pointer) {
+			res[i++] = pointer;
+			pointer = strtok(NULL, "/");
+		}
+	} else {
+		res = (char**)malloc(sizeof(char*)*2);
+		res[1] = 0;
+		res[0] = "/";
+	} 
+	return res;
+}
+
+nodeRef seekNode(nodeRef tree, char* path) 
+{   
+    char** sp = separationPath(path); 
+    int count = 0;
+    int i = 0;
+    while(sp[i++] != 0){
+    	count++;
+    }
+    nodeRef node = skNode(tree, path);  
+    if (strcmp(node->nodeName, sp[count - 1]) != 0){
+    	return 0; 
+    }
+    return node;
+}
+
+char* memcpu(char* source, char* buf)
+{
+    int size = strlen(source) + strlen(buf) + 1;    
+    char* result = (char*)malloc(sizeof(char)*size);
+    result[size - 1] = 0; 
+    int i = 0;
+    for(; i < strlen(source); i++) 
+    {
+        result[i] = source[i];
+    }
+    for(; i < size; i++) 
+    {
+        result[i] = buf[i - strlen(source)];
+    }
+    return result; 
+}

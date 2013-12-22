@@ -159,3 +159,27 @@ char* memcpu(char* source, char* buf)
     }
     return result; 
 }
+
+static struct fuse_operations fs_command =  
+{
+    .getattr    = fs_getattr,
+};
+
+static int fs_getattr(const char *path, struct stat *attr)
+{
+    memset(attr, 0, sizeof(struct stat));
+    Link node = seekNode(tree, path);
+    if (node == 0) return -ENOENT;  
+    if (node->content == 0)
+    {
+        attr->st_mode = S_IFDIR | 0666;
+        attr->st_nlink = 2;
+    } else
+    {
+        attr->st_mode = S_IFREG | 0666;
+        attr->st_nlink = 1;
+        attr->st_size = strlen(node->content);
+    }
+    return 0; 
+}
+

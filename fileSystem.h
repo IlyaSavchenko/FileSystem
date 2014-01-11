@@ -59,5 +59,24 @@ struct fs_info_s {
 extern char* filesys;
 node fs_cash;
 
+void showNode(node nd);
+void add(node parent, node child);
+void saveNode(node nd);
+void delete(node nd);
+void loadFileSystem();
+void copyName(char* dest, char* source);
+void formatForFS();
+void saveData(file_node nd, unsigned long index);
+char** split(char* path);
+unsigned long searchFreeInode();
+node readNode(unsigned long index);
+node searchByName(char* path);
+node searchParent(char* path);
+node createNodeEmptyInode(inode ind, unsigned long index);
+inode readInode(unsigned long index);
+inode emptyInode(int type);
+file_node dataOfEmptyNode();
+file_node dataOfNode(unsigned long index);
+
 
 #endif

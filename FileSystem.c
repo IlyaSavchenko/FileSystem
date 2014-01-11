@@ -2,6 +2,8 @@
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 
 typedef struct Node* nodeRef; 
 typedef struct Node{
@@ -16,11 +18,6 @@ typedef struct Node{
  nodeRef* nowNode;
  nodeRef* nowNodeData = "";
 
-int main(int argc, char const *argv[])
-{
-	/* code */
-	return 0;
-}
 
 nodeRef ConstructionTree()
 {
@@ -181,5 +178,23 @@ static int fs_getattr(const char *path, struct stat *attr)
         attr->st_size = strlen(node->content);
     }
     return 0; 
+}
+
+static int my_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+             			off_t offt, struct fuse_file_info *fileInf)
+{
+         
+    nodeRef Node = seekNode(tree, path);   
+    for(int i = 0; i < Node->countOfChild; i++)
+    {
+        filler(buf, Node->childs[i]->name, NULL, 0);
+    }
+    return 0;   
+}
+
+int main(int argc, char const *argv[])
+{
+	/* code */
+	return 0;
 }
 

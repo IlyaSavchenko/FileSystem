@@ -3,12 +3,12 @@
 #include <stdio.h>	
 #define DEBUG
 #ifdef DEBUG
-	#define log_msg(a) printf(">> line: %d, mess: %s\n", line, a);
+	#define log_msg(a) printf(">> line: %d, mess: %s\n", __LINE__, a);
 #else
 	#define log_msg(a)
 #endif
 
-#define size 4096// блок данных
+#define SIZE 4096// блок данных
 
 typedef struct ifolder_s {
 	char names[10][32];
@@ -34,7 +34,7 @@ struct inode_s {  // inodes
 typedef struct file_node_s * file_node;
 struct file_node_s
 {
-	char data[size];
+	char data[SIZE];
 	int size;
 };
 

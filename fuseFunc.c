@@ -22,22 +22,22 @@ static int my_getattr(const char *path, struct stat *stbuf) {
 	} else {
 		log_msg(path);
 		printf("This is NULL inode %d\n", nd->inode == NULL);
-		if (nd->inode->type == 1) {
-			log_msg("DIR");
+		if (nd->inode->type == 2) {
+			log_msg("FILE");
+			stbuf->st_mode = S_IFREG | 0666;
+			stbuf->st_nlink = 1;
+			stbuf->st_size = nd->inode->is_file.total_size;
+			return 0;
+		} else
+			printf("DIR\n");
 			stbuf->st_mode = S_IFDIR | 0777;
 			stbuf->st_nlink = 3;
 			return 0;
-		} else {
-			printf("FILE\n");
-			stbuf->st_mode = S_IFREG | 0666;
-			stbuf->st_nlink = 1;
-			stbuf->st_size = nd->inode->is_ifle.total_size;
-			return 0;
 		}
 	}
-}
 
-static int my_open(const char *path, struct fuse_file_info *finfo) {  //?????????????????????????1
+
+static int my_open(const char *path, struct fuse_file_info *fi) {  //?????????????????????????1
 	node nd = searchByName(path);
 	if (nd == NULL) 
 		return -ENOENT;
@@ -81,7 +81,7 @@ static int my_mkdir(const char* path, mode_t mode) {
 	return 0;
 }
 
-static int my_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *finfo) {
+static int my_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	node nd = searchByName(path);
 	printf("Read DIR %s\n", path);
 	if (nd == NULL) {
@@ -105,7 +105,7 @@ static int my_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t
 	}
 }
 
-static int my_opendir(const char *path, struct fuse_file_info *finfo) {
+static int my_opendir(const char *path, struct fuse_file_info *fi) {
 	node nd = searchByName(path);
 	if (nd == NULL) 
 		return -ENOENT;
@@ -128,7 +128,7 @@ int my_truncate(const char * path, off_t offset) {
 	return 0;
 }
 
-static int my_create(const char *path, mode_t mode, struct fuse_file_info *finfo) {
+static int my_create(const char *path, mode_t mode, struct fuse_file_info *fi) {
 	int pos = searchFreeInode();
 	log_msg(path);
 	char** names = split(path);
@@ -142,7 +142,7 @@ static int my_create(const char *path, mode_t mode, struct fuse_file_info *finfo
 	log_msg("");
 	log_msg(path);
 
-	node parent = find_node_parent(path);
+	node parent = searchParent(path);
 	inode in = emptyInode(2);
 	log_msg("");
 	node n = createNodeEmptyInode(in, pos);
@@ -154,7 +154,7 @@ static int my_create(const char *path, mode_t mode, struct fuse_file_info *finfo
 	return 0;
 }
 
-static int my_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *finfo) {
+static int my_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
 	log_msg(">>Start of reading");
 	printf(">>Size %d, offset %d \n", size, offset);
 	node file = searchByName(path);
@@ -247,7 +247,7 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 	printf(">>     Base offset: %d\n", offset);
 
 	int block_num, node_num;
-	int node_capacity = size * 49;
+	int node_capacity = SIZE * 49;
 
 	printf(">>     Node length %d\n", node_capacity);
 
@@ -257,8 +257,8 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 	printf(">>     Node_num %d\n", node_num);
 	printf(">>     New offset %d\n", offset);
 
-	block_num = offset / size;
-	offset -= block_num * size;
+	block_num = offset / SIZE;
+	offset -= block_num * SIZE;
 
 	printf(">>     Block_num %d\n", block_num);
 	printf(">>     New offset %d\n", offset);
@@ -286,7 +286,7 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 		log_msg("");
 		file->inode->is_file.used_count++;
 		log_msg("");
-		printf("+++++++++index %d \n", file->inode->is_file.data[block_num]);
+		printf(">>Index %d \n", file->inode->is_file.data[block_num]);
 		log_msg(">>Free space finded!");
 	}
 	else {
@@ -304,8 +304,8 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 		do {
 			//log_msg("+++++++++++++++++++++++++++++++++++++WRITE ITERATION++++++++++++++++++")
 			log_msg(">>Write:")
-			if (size > size)
-				write_size = size - offset;
+			if (size > SIZE)
+				write_size = SIZE - offset;
 			printf(">>Offcet %d, size %d, datasize %d, writte size %d, writted size %d\n", offset, size, size, write_size, writted_size);
 			memcpy(n->data + offset, buf + writted_size, write_size);
 			size -= write_size;
@@ -316,7 +316,7 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 			printf("len %d", len);
 			saveNode(file);
 			saveData(n, file->inode->is_file.data[block_num]);
-			if (len < size - 1) {
+			if (len < SIZE - 1) {
 				root->inode->is_file.total_size += writted_size;
 				saveNode(root);
 				return writted_size;
@@ -324,7 +324,7 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 			printf(">>Size need to write! %d\n", size);
 			if ((int)size > 0) {
 				if (block_num < 48) {
-					log_msgl(">>Next Data Block");
+					log_msg(">>Next Data Block");
 					block_num++;
 				} else {
 					log_msg(">>Next inode");
@@ -362,6 +362,9 @@ static struct fuse_operations operations = {
 	.mkdir 		= my_mkdir,
 	.rmdir      = my_rmdir,
 	.open       = my_open,
+	.create     = my_create,
+	.read 		= my_read,
+	.write 		= my_write,
 	.unlink 	= my_unlink, 
 	.truncate 	= my_truncate
 };
@@ -405,5 +408,5 @@ int main(int argc, char *argv[]) {
 	}
 	loadFileSystem();
 	searchFreeInode();
-	return fuse_main(new_argc, new_argv, &operations, NULL);
+	return fuse_main(my_argc, my_argv, &operations, NULL);
 }

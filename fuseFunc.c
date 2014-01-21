@@ -115,7 +115,6 @@ static int my_opendir(const char *path, struct fuse_file_info *fi) {
 }
 
 static int my_rmdir(const char *path) {
-	log_msg("rmdir");
 	node nd = searchByName(path);
 	log_msg("Node is finded");
 	showNode(nd);
@@ -164,21 +163,22 @@ static int my_read(const char *path, char *buf, size_t size, off_t offset, struc
 	}
 
 	int block_num, node_num;
-	int node_capacity = size * 49;
+	int node_capacity = SIZE * 49;
 	node_num = offset / node_capacity;
 	offset -= node_num * node_capacity;
 
-	block_num = offset / size;
-	offset -= block_num * size;
+	block_num = offset / SIZE;
+	offset -= block_num * SIZE;
 
 	int nind = node_num;
 
-	while (nind > 0) {
+	while (nind > 0) 
 		if (file->next == NULL) return 0;
 		file = file->next;
+		nind--;
 	}
 	if (file->inode->is_file.data[block_num] == NULL) {
-		log_msg("MAIN IS NOT EXISTS");
+		log_msg("Main is not exsist!");
 		return 0;
 	}
 	file_node nd = dataOfNode(file->inode->is_file.data[block_num]);
@@ -267,8 +267,27 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 	while (nind > 0) {
 		log_msg(">>Next node:")
 		if (file->next == NULL) {
-			log_msg("ERROR (next == NULL)");
-			return 0;	
+			log_msg(">> Next inode!");
+                        inode in = emptyInode(2);
+                        log_msg("");
+                        unsigned long pos = searchFreeInode();
+                        if (pos < 0) return 0;
+                        log_msg("");
+                        node new_node = createNodeEmptyInode(in, pos);
+                        printf("type %d\n", new_node->inode->type);
+                        log_msg("");
+                        file->next = new_node;
+                        log_msg("");
+                        printf("type %d\n", file->next->inode->type);
+                        file->inode->next = pos;
+                        log_msg("");
+                        save_node(new_node);
+                        log_msg("");
+                        save_node(file);
+                        log_msg("");
+                        block_num = 0;
+                        log_msg("");
+                } 	
 		} 
 		file = file->next;
 		nind--;
@@ -306,11 +325,11 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 			log_msg(">>Write:")
 			if (size > SIZE)
 				write_size = SIZE - offset;
-			printf(">>Offcet %d, size %d, datasize %d, writte size %d, writted size %d\n", offset, size, size, write_size, writted_size);
+			printf(">>Offcet %d, size %d, size %d, writte size %d, writted size %d\n", offset, size, size, write_size, writted_size);
 			memcpy(n->data + offset, buf + writted_size, write_size);
 			size -= write_size;
 			writted_size += write_size;
-			printf("offcet %d, size %d, datasize %d, writte size %d, writted size %d\n", offset, size, size, write_size, writted_size);
+			printf("Offcet %d, size %d, dsize %d, writte size %d, writted size %d\n", offset, size, size, write_size, writted_size);
 			n->size += write_size;
 			len = n->size;
 			printf("len %d", len);
@@ -342,6 +361,7 @@ static int my_write(const char *path, const char *buf, size_t size, off_t offset
 				offset = 0;
 				n = dataOfEmptyNode();
 				file->inode->is_file.data[block_num] = searchFreeDataNode();
+				if (file->inode->is_file.data[block_num] < 0) return writted_size;
 				file->inode->is_file.used_count++;
 				
 			}

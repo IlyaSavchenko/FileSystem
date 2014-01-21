@@ -122,15 +122,14 @@ node readNode(unsigned long index) {
 
 void showNode(node nd) {
     printf(">>Node\n");
-    printf(">>~index: %lu\n", nd->index);
-    printf(">>~name: %s\n", nd->name);
+    printf(">>~Index: %lu\n", nd->index);
     if (nd->inode->type == 1) {
         printf(">>~This is directory\n");
         for (int i = 0; i < 10; i++) {
-            printf(">>~child [%d] is NULL %d\n", i, nd->childs[i] == NULL);
-            printf(">>~child of inode [%d] is NULL %d\n", i, nd->inode->is_folder.nodes[i] == NULL);
+            printf(">>~Child [%d] is NULL %d\n", i, nd->childs[i] == NULL);
+            printf(">>~Child of inode [%d] is NULL %d\n", i, nd->inode->is_folder.nodes[i] == NULL);
             if (nd->inode->is_folder.nodes[i] != NULL) 
-                printf(">>~child's name [%d] %s\n", i, nd->inode->is_folder.names[i]);
+                printf(">>~Child's name [%d] %s\n", i, nd->inode->is_folder.names[i]);
         }
     }
 }
